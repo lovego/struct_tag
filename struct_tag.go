@@ -1,9 +1,5 @@
 package struct_tag
 
-import (
-	"strconv"
-)
-
 func Lookup(tag, key string) (value string, ok bool) {
 	for tag != "" {
 		// Skip leading space.
@@ -45,7 +41,7 @@ func Lookup(tag, key string) (value string, ok bool) {
 		tag = tag[i+1:]
 
 		if key == name {
-			value, err := strconv.Unquote(qvalue)
+			value, err := Unquote(qvalue)
 			if err != nil {
 				break
 			}

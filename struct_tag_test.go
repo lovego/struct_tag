@@ -25,6 +25,9 @@ func TestNonEmptyLookup(t *testing.T) {
 		{`a:"av" b:"b v"`, `b`, `b v`},
 		{`a:"av"
 		b:"b v"`, `b`, `b v`},
+		{`a:"bc
+def"`, `a`, `bc
+def`},
 	}
 	for _, tc := range testCases {
 		if v, ok := Lookup(tc[0], tc[1]); v != tc[2] || !ok {
