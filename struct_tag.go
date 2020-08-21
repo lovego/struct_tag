@@ -1,5 +1,10 @@
 package struct_tag
 
+func Get(tag, key string) string {
+	value, _ := Lookup(tag, key)
+	return value
+}
+
 func Lookup(tag, key string) (value string, ok bool) {
 	for tag != "" {
 		// Skip leading space.
