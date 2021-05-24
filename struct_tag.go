@@ -7,46 +7,13 @@ func Get(tag, key string) string {
 
 func Lookup(tag, key string) (value string, ok bool) {
 	for tag != "" {
-		// Skip leading space.
-		i := 0
-		for i < len(tag) && (tag[i] == ' ' || tag[i] == '\n' || tag[i] == '\r' || tag[i] == '\t') {
-			i++
-		}
-		tag = tag[i:]
-		if tag == "" {
+		var name, quotedValue string
+		name, quotedValue, tag = stripNameValuePair(tag)
+		if name == "" || quotedValue == "" {
 			break
 		}
-
-		// Scan to colon. A space, a quote or a control character is a syntax error.
-		// Strictly speaking, control chars include the range [0x7f, 0x9f], not just
-		// [0x00, 0x1f], but in practice, we ignore the multi-byte control characters
-		// as it is simpler to inspect the tag's bytes than the tag's runes.
-		i = 0
-		for i < len(tag) && tag[i] > ' ' && tag[i] != ':' && tag[i] != '"' && tag[i] != 0x7f {
-			i++
-		}
-		if i == 0 || i+1 >= len(tag) || tag[i] != ':' || tag[i+1] != '"' {
-			break
-		}
-		name := string(tag[:i])
-		tag = tag[i+1:]
-
-		// Scan quoted string to find value.
-		i = 1
-		for i < len(tag) && tag[i] != '"' {
-			if tag[i] == '\\' {
-				i++
-			}
-			i++
-		}
-		if i >= len(tag) {
-			break
-		}
-		qvalue := string(tag[:i+1])
-		tag = tag[i+1:]
-
-		if key == name {
-			value, err := Unquote(qvalue)
+		if name == key {
+			value, err := Unquote(quotedValue)
 			if err != nil {
 				break
 			}
@@ -54,4 +21,81 @@ func Lookup(tag, key string) (value string, ok bool) {
 		}
 	}
 	return "", false
+}
+
+func Parse(tag string) (result map[string]string) {
+	result = make(map[string]string)
+	for tag != "" {
+		var name, quotedValue string
+		name, quotedValue, tag = stripNameValuePair(tag)
+		if name == "" || quotedValue == "" {
+			break
+		}
+		value, err := Unquote(quotedValue)
+		if err != nil {
+			break
+		}
+		result[name] = value
+	}
+	return result
+}
+
+func stripNameValuePair(tag string) (string, string, string) {
+	if tag = trimLeadingSpace(tag); tag == "" {
+		return "", "", ""
+	}
+	var name, quotedValue string
+	if name, tag = stripName(tag); name == "" || tag == "" {
+		return "", "", ""
+	}
+	quotedValue, tag = stripValue(tag)
+	return name, quotedValue, tag
+}
+
+func trimLeadingSpace(tag string) string {
+	for i := 0; i < len(tag); i++ {
+		switch tag[i] {
+		case ' ', '\n', '\r', '\t':
+		default:
+			return tag[i:]
+		}
+	}
+	return tag
+}
+
+func stripName(tag string) (string, string) {
+	for i := 0; i < len(tag); i++ {
+		// Scan to colon.
+		if tag[i] == ':' {
+			if i+1 < len(tag) {
+				return tag[:i], tag[i+1:]
+			} else {
+				return tag[:i], ""
+			}
+		}
+		// A space, a quote or a control character is a syntax error.
+		// Strictly speaking, control chars include the range [0x7f, 0x9f], not just
+		// [0x00, 0x1f], but in practice, we ignore the multi-byte control characters
+		// as it is simpler to inspect the tag's bytes than the tag's runes.
+		if tag[i] <= ' ' || tag[i] == '"' || tag[i] == 0x7f {
+			return "", ""
+		}
+	}
+	return "", ""
+}
+
+func stripValue(tag string) (string, string) {
+	// Scan quoted string.
+	if tag[0] != '"' {
+		return "", ""
+	}
+	for i := 1; i < len(tag); i++ {
+		switch tag[i] {
+		case '"':
+			return tag[:i+1], tag[i+1:]
+		case '\\':
+			i++
+		}
+	}
+	return "", ""
 }

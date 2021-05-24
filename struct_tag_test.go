@@ -1,37 +1,35 @@
 package struct_tag
 
 import (
-	"testing"
+	"fmt"
 )
 
-func TestEmptyLookup(t *testing.T) {
-	testCases := [][2]string{
-		{``, ``},
-		{`a`, ``},
-		{`a:""`, ``},
-		{`a:"av"`, `b`},
-	}
-	for _, tc := range testCases {
-		if v, ok := Lookup(tc[0], tc[1]); v != "" || ok {
-			t.Errorf("Lookup(%#v, %#v) got unexpected: %#v, %v", tc[0], tc[1], v, ok)
-		}
-	}
+func ExampleLookup_false() {
+	fmt.Println(Lookup(``, ``))
+	fmt.Println(Lookup(`a`, ``))
+	fmt.Println(Lookup(`a:""`, ``))
+	fmt.Println(Lookup(`a:"av"`, `b`))
+	// Output:
+	//  false
+	//  false
+	//  false
+	//  false
 }
 
-func TestNonEmptyLookup(t *testing.T) {
-	testCases := [][3]string{
-		{`a:""`, `a`, ``},
-		{`a:"av"`, `a`, `av`},
-		{`a:"av" b:"b\" v"`, `b`, `b" v`},
-		{`a:"av"
-		b:"b v"`, `b`, `b v`},
-		{`a:"bc
-\"def"`, `a`, `bc
-"def`},
-	}
-	for _, tc := range testCases {
-		if v, ok := Lookup(tc[0], tc[1]); v != tc[2] || !ok {
-			t.Errorf("Lookup(%#v, %#v) got unexpected: %#v, %v", tc[0], tc[1], v, ok)
-		}
-	}
+func ExampleLookup_true() {
+	fmt.Println(Lookup(`a:""`, `a`))
+	fmt.Println(Lookup(`a:"av"`, `a`))
+	fmt.Println(Lookup(`a:"av" b:"b\" v"`, `b`))
+	fmt.Println(Lookup(`a:"av"
+		b:"b v"`, `b`))
+	fmt.Println(Lookup(`名称:"值
+\"def"`, `名称`))
+	// Output:
+	//  true
+	// av true
+	// b" v true
+	// b v true
+	// 值
+	// "def true
+
 }
