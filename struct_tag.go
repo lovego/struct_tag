@@ -53,14 +53,15 @@ func stripNameValuePair(tag string) (string, string, string) {
 }
 
 func trimLeadingSpace(tag string) string {
-	for i := 0; i < len(tag); i++ {
+	i := 0
+	for ; i < len(tag); i++ {
 		switch tag[i] {
 		case ' ', '\n', '\r', '\t':
 		default:
 			return tag[i:]
 		}
 	}
-	return tag
+	return tag[i:]
 }
 
 func stripName(tag string) (string, string) {
